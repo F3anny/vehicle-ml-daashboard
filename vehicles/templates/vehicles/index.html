@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fleetwise — Vehicle ML Dashboard</title>
+  <link href="{% static 'vehicles/vendor/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vehicles/dashboard.css' %}" rel="stylesheet">
+  <script src="{% static 'vehicles/vendor/plotly.min.js' %}"></script>
+</head>
+<body>
+<aside class="sidebar">
+  <a href="{% url 'dashboard' %}" class="brand"><span class="brand-mark">f<span>↗</span></span>fleetwise<span class="brand-dot">.</span></a>
+  <div class="workspace"><span class="workspace-icon">V</span><div>Vehicle workspace<small>Analytics & insights</small></div><span class="workspace-chevron">⌄</span></div>
+  <p class="nav-label">WORKSPACE</p>
+  <nav id="dashboard-nav" aria-label="Dashboard sections">
+    <a href="#overview" class="nav-item active"><span>▦</span>Overview<span class="nav-badge">Live</span></a>
+    <a href="#distribution" class="nav-item"><span>▥</span>Data visualizations</a>
+    <a href="#frequency-table" class="nav-item"><span>▤</span>Frequency tables</a>
+    <a href="#inventory" class="nav-item"><span>▧</span>Vehicle inventory</a>
+  </nav>
+  <div class="sidebar-note"><span class="note-symbol">✧</span><h3>A clearer view of your fleet.</h3><p>Explore patterns. Understand your data. Make informed decisions.</p><a href="#distribution">Explore insights <span>↗</span></a></div>
+  <div class="sidebar-bottom"><span class="status-dot"></span> CSV data source <span class="local-tag">LOCAL</span></div>
+</aside>
+<main>
+  <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong>Overview</strong></div><div class="topbar-right"><span class="demo-badge"><i></i> Demo dataset</span><span class="avatar">VA</span></div></header>
+  <div class="page-content">
+    <section id="overview" class="page-heading"><div><div class="eyebrow">YOUR FLEET, AT A GLANCE</div><h1>Vehicle intelligence<span>.</span></h1><p>Turn vehicle data into a clearer picture.</p></div><button class="export-button" id="export-button"><span>↓</span> Export data</button></section>
+    <div class="data-banner"><span class="banner-icon">◈</span><span><strong>Good data. Better decisions.</strong> Exploring {{ source_total }} synthetic vehicle records, ready for analysis.</span><span class="banner-label">SAMPLE DATA</span></div>
+    <form method="get" class="filter-bar" id="filters">
+      <label class="search-field"><span aria-hidden="true">⌕</span><input type="search" name="q" value="{{ query }}" placeholder="Search manufacturer, model or ID…" aria-label="Search vehicles"></label>
+      <label class="visually-hidden" for="manufacturer">Manufacturer</label><select name="manufacturer" id="manufacturer"><option value="">All manufacturers</option>{% for item in manufacturers %}<option value="{{ item }}" {% if item == selected_manufacturer %}selected{% endif %}>{{ item }}</option>{% endfor %}</select>
+      <label class="visually-hidden" for="fuel">Fuel type</label><select name="fuel" id="fuel"><option value="">All fuel types</option>{% for item in fuels %}<option value="{{ item }}" {% if item == selected_fuel %}selected{% endif %}>{{ item }}</option>{% endfor %}</select>
+      <button class="apply-button" type="submit">Apply filters</button>{% if query or selected_manufacturer or selected_fuel %}<a href="{% url 'dashboard' %}" class="reset-link">Reset</a>{% endif %}
+    </form>
+    <div class="stats-grid">
+      <article class="stat-card"><div class="stat-label">Total vehicles <span class="stat-icon violet">▧</span></div><div class="stat-value">{{ total|floatformat:'0g' }}</div><div class="stat-foot"><span class="tiny-dot"></span> {{ source_total|floatformat:'0g' }} records in source</div></article>
+      <article class="stat-card"><div class="stat-label">Manufacturers <span class="stat-icon teal">▦</span></div><div class="stat-value">{{ brands }}<small>brands</small></div><div class="stat-foot">Distinct manufacturers in selection</div></article>
+      <article class="stat-card"><div class="stat-label">Average vehicle price <span class="stat-icon amber">$</span></div><div class="stat-value">${{ avg_price|floatformat:'0g' }}</div><div class="stat-foot">Mean listed value · USD</div></article>
+      <article class="stat-card"><div class="stat-label">Average mileage <span class="stat-icon blue">↗</span></div><div class="stat-value">{{ avg_mileage|floatformat:'0g' }}<small>km</small></div><div class="stat-foot">Across selected vehicles</div></article>
+    </div>
+    <section id="distribution" class="chart-grid">
+      <article class="panel"><div class="panel-heading"><div><h2>Manufacturer distribution</h2><p>A breakdown of vehicles by brand</p></div><span class="panel-tag">{{ brands }} brands</span></div>{% if total %}{{ bar_chart|safe }}{% else %}<div class="empty-state">No vehicles match your filters.<a href="{% url 'dashboard' %}">Clear filters</a></div>{% endif %}</article>
+      <article class="panel"><div class="panel-heading"><div><h2>Fuel composition</h2><p>How your selected vehicles are powered</p></div><span class="subtle-icon">◉</span></div>{% if total %}{{ donut_chart|safe }}{% else %}<div class="empty-state">No fuel data for this selection.</div>{% endif %}</article>
+    </section>
+    <section class="details-grid">
+      <article class="panel" id="frequency-table"><div class="panel-heading"><div><div class="eyebrow">ONE-WAY ANALYSIS</div><h2>Manufacturer frequency</h2><p>Vehicle counts grouped by manufacturer</p></div><span class="panel-tag">{{ total|floatformat:'0g' }} vehicles</span></div><div class="table-responsive frequency-wrap">{{ frequency_table|safe }}</div><div class="table-note">Frequency = number of vehicles belonging to each manufacturer.</div></article>
+      <aside class="insight-panel"><span class="insight-label">✧ &nbsp; DATA SPOTLIGHT</span><h2>Every fleet<br>has a story.</h2><p>Your most represented manufacturer in the current selection is:</p><div class="top-brand">{{ top_brand }}</div><div class="share-row"><span>Share of selected vehicles</span><strong>{{ top_share }}%</strong></div><div class="share-track"><span style="width: {{ top_share }}%"></span></div><p class="insight-disclaimer">Descriptive insights from synthetic data. No predictive model is trained in this tutorial.</p><a href="#inventory">Take a closer look <span>↗</span></a></aside>
+    </section>
+    <section id="inventory" class="panel inventory-panel"><div class="panel-heading"><div><h2>Vehicle inventory</h2><p>Previewing the first 20 matching records · Export for the full selection</p></div><span class="panel-tag">{{ total|floatformat:'0g' }} matches</span></div><div class="table-responsive"><table class="table"><thead><tr><th>Vehicle ID</th><th>Manufacturer / model</th><th>Year</th><th>Fuel type</th><th>Mileage</th><th>Price (USD)</th></tr></thead><tbody>{% for vehicle in vehicles %}<tr><td class="id-cell">{{ vehicle.vehicle_id }}</td><td><strong>{{ vehicle.manufacturer }}</strong> <span class="model-name">{{ vehicle.model }}</span></td><td>{{ vehicle.year }}</td><td><span class="fuel-pill fuel-{{ vehicle.fuel_type|lower }}">{{ vehicle.fuel_type }}</span></td><td>{{ vehicle.mileage_km|floatformat:'0g' }} km</td><td class="price-cell">${{ vehicle.price_usd|floatformat:'0g' }}</td></tr>{% empty %}<tr><td colspan="6" class="empty-state">No matching vehicles. Try another search or clear your filters.</td></tr>{% endfor %}</tbody></table></div></section>
+    <footer><span><strong>fleetwise.</strong> Vehicle Machine Learning Dashboard</span><span>Django · pandas · Plotly</span></footer>
+  </div>
+</main>
+<script src="{% static 'vehicles/dashboard.js' %}"></script>
+</body></html>
