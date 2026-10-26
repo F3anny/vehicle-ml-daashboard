@@ -18,7 +18,7 @@ def charts(df):
     bar.update_traces(marker_line_width=0, width=0.55, hovertemplate='%{x}<br>%{y} vehicles<extra></extra>')
     bar.update_layout(showlegend=False, xaxis_title=None, yaxis_title='Vehicles', bargap=0.4)
     donut = px.pie(df, names='fuel_type', hole=0.73, color='fuel_type',
-                   color_discrete_map={'Petrol': '#6d5efc', 'Diesel': '#22b5ad', 'Hybrid': '#f3b75f', 'Electric': '#b4acff'})
+                   color_discrete_map={'Gasoline': '#6d5efc', 'Diesel': '#22b5ad', 'Hybrid': '#f3b75f', 'Electric': '#b4acff'})
     donut.update_traces(textinfo='none', marker_line_color='white', marker_line_width=4,
                         hovertemplate='%{label}: %{value} (%{percent})<extra></extra>')
     donut.update_layout(legend=dict(orientation='h', y=-0.05, x=0.5, xanchor='center'),
